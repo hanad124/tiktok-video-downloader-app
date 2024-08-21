@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "e-financer",
+    "scheme": "e-financer",
+    "slug": "e-financer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/Logo.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/Logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#6957E7"
+    },
+    "notification": {
+      "icon": "./assets/Logo.png",
+      "iconColor": "#6957E7",
+      "defaultTitle": "e-Financer",
+      "defaultBody": "Goal Achieved",
+      "priority": "high",
+      "showBadge": true,
+      "badgeColor": "#6957E7"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/Logo.png",
+        "backgroundColor": "#6957E7"
+      },
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.faaruuq.efinancer"
+    },
+    "web": {
+      "favicon": "./assets/Logo.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "f638a1c1-0e6c-42b9-b544-b9456a3f996a"
+      }
+    },
+    "owner": "faaruuq"
+  }
+}
