@@ -6,13 +6,16 @@ export const useVideo = create((set) => ({
   video: null,
   loading: false,
   notTiktokLink: false,
+
+  // Fetch video function
   fetchVideo: async (url) => {
     set({ loading: true });
 
-    // URL validation
-    const isValidUrl = /^(https?:\/\/)?(www\.)?(tiktok\.com)\/.+$/.test(url);
+    const isValidUrl =
+      /^(https?:\/\/)?(www\.)?(vm.tiktok\.com|tiktok\.com)\/.+$/.test(url);
 
     if (!isValidUrl) {
+      console.log("NOT VALID LINK!");
       set({ notTiktokLink: true, loading: false, video: null });
       return;
     }
@@ -29,5 +32,10 @@ export const useVideo = create((set) => ({
       console.log(error);
       set({ notTiktokLink: true, loading: false, video: null });
     }
+  },
+
+  // Clear video result
+  clearVideo: () => {
+    set({ video: null, notTiktokLink: false });
   },
 }));

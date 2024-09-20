@@ -5,7 +5,6 @@ import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import * as Notifications from "expo-notifications";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { AuthProvider, AuthContext } from "../context/authContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -43,16 +42,14 @@ const RootLayout = () => {
   }
 
   return (
-    <AuthProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <Stack
-          initialRouteName={"/home"}
-          screenOptions={{
-            headerShown: false,
-          }}
-        ></Stack>
-      </GestureHandlerRootView>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Stack
+        initialRouteName={"/home"}
+        screenOptions={{
+          headerShown: false,
+        }}
+      ></Stack>
+    </GestureHandlerRootView>
   );
 };
 
