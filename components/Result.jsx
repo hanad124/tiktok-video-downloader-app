@@ -1,24 +1,38 @@
 import React, { useState } from "react";
-import { View, Text, Image, Button, Alert, Platform } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  Alert,
+  Platform,
+  TouchableOpacity,
+  Modal,
+  Button,
+} from "react-native";
 import * as FileSystem from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import prettyBytes from "pretty-bytes";
-import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur"; // Import BlurView
 import CustomSkeleton from "./CustomSkeleton";
 import CustomButton from "./CustomButton";
+
+import { FileVideo, FileAudio } from "lucide-react-native";
 
 const Result = ({ video, loading, notTiktokLink }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadSize, setDownloadSize] = useState(0);
+  const [activeTab, setActiveTab] = useState("video");
+  const [modalVisible, setModalVisible] = useState(false); // State for controlling the modal visibility
 
-  const downloadVideo = async (url, filename) => {
+  // Download functionality remains the same
+  const downloadFile = async (url, filename, type) => {
     const { status } = await MediaLibrary.requestPermissionsAsync();
 
     if (status !== "granted") {
       Alert.alert(
         "Permission Denied",
-        "You need to grant permission to save the video."
+        `You need to grant permission to save the ${type}.`
       );
       return;
     }
@@ -30,7 +44,7 @@ const Result = ({ video, loading, notTiktokLink }) => {
       if (!permissions.granted) {
         Alert.alert(
           "Permission Denied",
-          "You need to grant directory access to save the video."
+          `You need to grant directory access to save the ${type}.`
         );
         return;
       }
@@ -38,7 +52,9 @@ const Result = ({ video, loading, notTiktokLink }) => {
       setIsDownloading(true);
       setDownloadProgress(0);
 
-      const path = `${FileSystem.documentDirectory}${filename}.mp4`;
+      const path = `${FileSystem.documentDirectory}${filename}.${
+        type === "audio" ? "mp3" : "mp4"
+      }`;
 
       const downloadResumable = FileSystem.createDownloadResumable(
         url,
@@ -62,8 +78,8 @@ const Result = ({ video, loading, notTiktokLink }) => {
 
         const safUri = await FileSystem.StorageAccessFramework.createFileAsync(
           permissions.directoryUri,
-          `${filename}.mp4`,
-          "video/mp4"
+          `${filename}.${type === "audio" ? "mp3" : "mp4"}`,
+          type === "audio" ? "audio/mpeg" : "video/mp4"
         );
 
         await FileSystem.writeAsStringAsync(safUri, base64, {
@@ -72,13 +88,15 @@ const Result = ({ video, loading, notTiktokLink }) => {
 
         Alert.alert(
           "Download Success",
-          "Video has been saved to the selected directory."
+          `${
+            type.charAt(0).toUpperCase() + type.slice(1)
+          } has been saved to the selected directory.`
         );
       } catch (error) {
         console.error(error);
         Alert.alert(
           "Download Failed",
-          "An error occurred while downloading the video."
+          `An error occurred while downloading the ${type}.`
         );
       } finally {
         setIsDownloading(false);
@@ -87,7 +105,9 @@ const Result = ({ video, loading, notTiktokLink }) => {
       setIsDownloading(true);
       setDownloadProgress(0);
 
-      const path = `${FileSystem.documentDirectory}${filename}.mp4`;
+      const path = `${FileSystem.documentDirectory}${filename}.${
+        type === "audio" ? "mp3" : "mp4"
+      }`;
 
       const downloadResumable = FileSystem.createDownloadResumable(
         url,
@@ -109,13 +129,15 @@ const Result = ({ video, loading, notTiktokLink }) => {
 
         Alert.alert(
           "Download Success",
-          "Video has been saved to your media library."
+          `${
+            type.charAt(0).toUpperCase() + type.slice(1)
+          } has been saved to your media library.`
         );
       } catch (error) {
         console.error(error);
         Alert.alert(
           "Download Failed",
-          "An error occurred while downloading the video."
+          `An error occurred while downloading the ${type}.`
         );
       } finally {
         setIsDownloading(false);
@@ -125,53 +147,52 @@ const Result = ({ video, loading, notTiktokLink }) => {
 
   const noVideoData = !video || Object.keys(video).length === 0;
 
-  return (
-    <View
-      className={`flex items-center mt-10 ${
-        !noVideoData && "border"
-      } border-[#e8e8e8] rounded-lg`}
-    >
-      {!noVideoData && (
-        <View className="w-full max-w-md bg-white rounded-lg shadow-lg mb-6 overflow-hidden">
-          <Image
-            source={{ uri: video?.ai_dynamic_cover }}
-            style={{
-              width: "100%",
-              height: 200,
-              borderTopLeftRadius: 10,
-              borderTopRightRadius: 10,
-            }}
-            resizeMode="cover"
-          />
-          <View className="p-4">
+  const renderTabContent = () => {
+    if (activeTab === "video") {
+      return (
+        <View className="w-full max-w-md bg-white rounded-lg shadow-lg mb-6 overflow-hidden p-4">
+          <View className="rounded-lg overflow-hidden mb-4 ">
+            <Image
+              source={{ uri: video?.ai_dynamic_cover }}
+              style={{
+                width: "100%",
+                height: 200,
+                borderTopLeftRadius: 10,
+                borderTopRightRadius: 10,
+              }}
+              resizeMode="cover"
+            />
+          </View>
+          <View>
             <View className="flex-row items-center mb-4">
-              <View className="border-[2px] border-primary rounded-full p-[1px] ">
-                <Image
-                  source={{ uri: video.author.avatar }}
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 24,
-                    marginRight: 0,
-                  }}
-                />
-              </View>
+              <TouchableOpacity onPress={() => setModalVisible(true)}>
+                <View className="border-2 p-[1px] border-primary rounded-full">
+                  <Image
+                    source={{ uri: video.author.avatar }}
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 24,
+                      marginRight: 0,
+                    }}
+                  />
+                </View>
+              </TouchableOpacity>
               <Text className="font-bold text-gray-700 ml-4">
                 {video.author.nickname} | {video.author.unique_id}
               </Text>
             </View>
-            <Text className="text-gray-600 mb-2">
-              {video.title.slice(0, 80) +
-                (video.title.length > 80 ? "..." : "")}
+            <Text className="text-gray-600">
+              {video.title.slice(0, 120) +
+                (video.title.length > 120 ? "..." : "")}
             </Text>
-            <View className="">
+            <View>
               {isDownloading ? (
                 <>
-                  {/* Simple Progress Bar */}
                   <View
                     style={{
                       height: 7,
-                      backgroundColor: "#e0e0e0", // Background color of the bar
+                      backgroundColor: "#e0e0e0",
                       borderRadius: 5,
                       overflow: "hidden",
                       marginBottom: 10,
@@ -180,11 +201,11 @@ const Result = ({ video, loading, notTiktokLink }) => {
                   >
                     <View
                       style={{
-                        width: `${downloadProgress * 100}%`, // Progress width based on download progress
+                        width: `${downloadProgress * 100}%`,
                         height: "100%",
-                        backgroundColor: "#6200ea", // Foreground color of the progress
+                        backgroundColor: "#6200ea",
                         borderRadius: 5,
-                        transition: "width 0.5s ease", // Smooth transition for progress
+                        transition: "width 0.5s ease",
                       }}
                     />
                   </View>
@@ -196,8 +217,10 @@ const Result = ({ video, loading, notTiktokLink }) => {
               ) : (
                 <CustomButton
                   text="Save Video"
-                  handlePress={() => downloadVideo(video.play, video.id)}
-                  containerStyles={`w-full mt-6 flex items-center gap-2 justify-center`}
+                  handlePress={() =>
+                    downloadFile(video.play, video.id, "video")
+                  }
+                  containerStyles={`w-full mt-0 flex items-center gap-2 justify-center`}
                   isLoading={loading}
                   loadingState={"Loading..."}
                 />
@@ -205,7 +228,171 @@ const Result = ({ video, loading, notTiktokLink }) => {
             </View>
           </View>
         </View>
-      )}
+      );
+    } else if (activeTab === "audio") {
+      return (
+        <View className="w-full max-w-md bg-white rounded-lg shadow-lg mb-6 p-4">
+          <View>
+            <Text className="text-center mb-2 text-sm font-pmedium">
+              Original Sound
+            </Text>
+          </View>
+          <Text
+            className="text-gray-800 font-psemibold mb-2 text-center
+          "
+          >
+            {video.music_info?.title || "Unknown Audio"} || By
+          </Text>
+          <View className="flex-row items-center mb-4">
+            <Image
+              source={{ uri: video.music_info?.cover }}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                marginRight: 0,
+              }}
+            />
+            <Text className="font-bold text-gray-700 ml-4">
+              {video.music_info?.author || "Unknown Artist"}
+            </Text>
+          </View>
+          <View>
+            <CustomButton
+              text="Save Audio"
+              handlePress={() =>
+                downloadFile(
+                  video.music_info?.play,
+                  video.music_info?.id,
+                  "audio"
+                )
+              }
+              containerStyles={`w-full mt-0 flex items-center gap-2 justify-center`}
+              isLoading={loading}
+              loadingState={"Loading..."}
+            />
+          </View>
+        </View>
+      );
+    }
+  };
+
+  return (
+    <View
+      className={`flex items-center mt-10 bg-white ${
+        !noVideoData && "border"
+      } border-[#e8e8e8] rounded-lg`}
+    >
+      <View className="flex-row justify-center mb-4 gap-x-2">
+        <TouchableOpacity
+          onPress={() => setActiveTab("video")}
+          style={{
+            padding: 10,
+            borderBottomWidth: activeTab === "video" ? 2 : 0,
+            borderBottomColor: "#6200ea",
+          }}
+          className="flex flex-row items-center gap-2"
+        >
+          <FileVideo
+            color={activeTab === "video" ? "#6200ea" : "#000"}
+            size={20}
+          />
+          <Text
+            style={{
+              color: activeTab === "video" ? "#6200ea" : "#000",
+              fontWeight: activeTab === "video" ? "bold" : "normal",
+            }}
+          >
+            Video
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setActiveTab("audio")}
+          style={{
+            padding: 10,
+            borderBottomWidth: activeTab === "audio" ? 2 : 0,
+            borderBottomColor: "#6200ea",
+          }}
+          className="flex flex-row items-center gap-2"
+        >
+          <FileAudio
+            color={activeTab === "audio" ? "#6200ea" : "#000"}
+            size={20}
+          />
+
+          <Text
+            style={{
+              color: activeTab === "audio" ? "#6200ea" : "#000",
+              fontWeight: activeTab === "audio" ? "bold" : "normal",
+            }}
+          >
+            Audio
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {!noVideoData && renderTabContent()}
+
+      {/* Modal for the user profile */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+      >
+        {/* Blurred Background */}
+        <BlurView
+          intensity={100}
+          style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: "rgba(0,0,0,0.8)",
+            }}
+          >
+            <View
+              style={{
+                width: 350,
+                padding: 20,
+                marginHorizontal: 50,
+                backgroundColor: "white",
+                borderRadius: 10,
+                alignItems: "center",
+              }}
+            >
+              <View className="-mt-20 border-[3px] p-[1px] rounded-full border-primary">
+                <Image
+                  source={{ uri: video.author.avatar }}
+                  style={{ width: 100, height: 100, borderRadius: 50 }}
+                />
+              </View>
+              <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 10 }}>
+                {video.author.nickname}
+              </Text>
+              <Text style={{ fontSize: 16, color: "gray", marginBottom: 20 }}>
+                @{video.author.unique_id}
+              </Text>
+
+              <View className="flex flex-row items-center justify-center">
+                <View></View>
+                <View></View>
+                <View></View>
+              </View>
+              {/* <Button title="Close" onPress={() => setModalVisible(false)} /> */}
+              <CustomButton
+                text={"Close"}
+                handlePress={() => setModalVisible(false)}
+              ></CustomButton>
+            </View>
+          </View>
+        </BlurView>
+      </Modal>
+
       {loading && (
         <View className="w-full max-w-md bg-white rounded-lg border border-[#e8e8e8] shadow-lg mb-6 p-4">
           <CustomSkeleton

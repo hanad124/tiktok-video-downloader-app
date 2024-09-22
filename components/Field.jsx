@@ -6,6 +6,9 @@ import CustomButton from "./CustomButton";
 import { useVideo } from "../store/video";
 import Result from "./Result";
 
+import { Link } from "lucide-react-native";
+import { useState } from "react";
+
 const Schema = yup.object().shape({
   url: yup
     .string()
@@ -24,6 +27,8 @@ const Field = () => {
   const loading = useVideo((state) => state.loading);
   const video = useVideo((state) => state.video);
   const notTiktokLink = useVideo((state) => state.notTiktokLink);
+
+  const [isFocused, setIsFocused] = useState(false); // State to track focus
 
   const {
     control,
@@ -48,30 +53,64 @@ const Field = () => {
   return (
     <View className="mt-10">
       <View className="mt-4">
-        <Controller
-          control={control}
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={{
-                padding: 10,
-              }}
-              className="border border-slate-400 px-2 rounded-lg shadow py-2 w-full mt-2 focus:border-2 focus:border-primary focus:ring-4 focus:ring-primary"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              placeholder="Paste URL / link here"
-            />
-          )}
-          name="url"
-        />
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            borderColor: isFocused ? "#6200ea" : "#cbd5e0", // Change border color when focused
+            borderWidth: 1,
+            borderRadius: 8,
+            padding: 10,
+            paddingVertical: 4,
+            shadowColor: "#000",
+            shadowOpacity: 0.1,
+            shadowRadius: 10,
+          }}
+        >
+          {/* Link Icon from lucide-react-native */}
+          <Link
+            color={isFocused ? "#6200ea" : "#9DB2BF"}
+            size={20}
+            style={{ marginRight: 10 }}
+          />
+
+          {/* TextInput with Controller */}
+          <Controller
+            control={control}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput
+                style={{
+                  flex: 1, // Take remaining space
+                  paddingVertical: 8,
+                  paddingHorizontal: 0, // Remove horizontal padding so it aligns with the icon
+                  fontSize: 16,
+                  color: "#4a4a4a",
+                }}
+                onBlur={() => {
+                  onBlur();
+                  setIsFocused(false); // Remove focus effect
+                }}
+                onFocus={() => setIsFocused(true)} // Apply focus effect
+                onChangeText={onChange}
+                value={value}
+                placeholder="Paste URL / link here"
+                placeholderTextColor="#999"
+              />
+            )}
+            name="url"
+          />
+        </View>
+
+        {/* Display error messages */}
         {errors.url && (
-          <Text className="text-red-500">{errors.url.message}</Text>
+          <Text className="text-red-500 mt-2">{errors.url.message}</Text>
         )}
         {notTiktokLink && (
-          <Text className="text-red-500">Please enter a valid TikTok URL</Text>
+          <Text className="text-red-500 mt-2">
+            Please enter a valid TikTok URL
+          </Text>
         )}
       </View>
-
       <View className="flex flex-row w-full items-center justify-center gap-2">
         <View className="flex-1">
           <CustomButton
